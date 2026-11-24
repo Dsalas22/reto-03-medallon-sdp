@@ -1,0 +1,4 @@
+{"evento_id":"e1","aeronave_id":"A","pais_origen":"CR","velocidad_kmh":200}
+{"evento_id":"e2","aeronave_id":"B","pais_origen":"PA","velocidad_kmh":300}
+{"evento_id":"e3","aeronave_id":"A","pais_origen":"CR","velocidad_kmh":250}
+{"evento_id":"e4","aeronave_id":"C","pais_origen":"GT","velocidad_kmh":-20}
