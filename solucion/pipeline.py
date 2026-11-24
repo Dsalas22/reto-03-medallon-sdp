@@ -16,6 +16,8 @@ SCHEMA = StructType([
     StructField("aeronave_id", StringType()),
     StructField("pais_origen", StringType()),
     StructField("velocidad_kmh", DoubleType()),
+    StructField("persona_id", StringType()),
+    StructField("persona_alias", StringType()),
 ])
 
 
