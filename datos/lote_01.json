@@ -1,4 +1,4 @@
-{"evento_id":"e1","aeronave_id":"A","pais_origen":"CR","velocidad_kmh":200}
-{"evento_id":"e2","aeronave_id":"B","pais_origen":"PA","velocidad_kmh":300}
-{"evento_id":"e3","aeronave_id":"A","pais_origen":"CR","velocidad_kmh":250}
-{"evento_id":"e4","aeronave_id":"C","pais_origen":"GT","velocidad_kmh":-20}
+{"evento_id":"e1","aeronave_id":"A","pais_origen":"CR","velocidad_kmh":200,"persona_id":"DUMMY-ID-001","persona_alias":"DUMMY_UCRANIA"}
+{"evento_id":"e2","aeronave_id":"B","pais_origen":"PA","velocidad_kmh":300,"persona_id":"DUMMY-ID-002","persona_alias":"DUMMY_GRECIA"}
+{"evento_id":"e3","aeronave_id":"A","pais_origen":"CR","velocidad_kmh":250,"persona_id":"DUMMY-ID-003","persona_alias":"DUMMY_FILIPINAS"}
+{"evento_id":"e4","aeronave_id":"C","pais_origen":"GT","velocidad_kmh":-20,"persona_id":"DUMMY-ID-004","persona_alias":"DUMMY_UCRANIA"}
