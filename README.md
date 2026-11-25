@@ -107,6 +107,23 @@ El límite de 500 es **por ejecución del generador**, no para el total acumulad
 - Aprobación: Bronze = 4, Silver = 3, un descarte y Gold coincide con los valores esperados y con el cálculo independiente.
 - Reflexión: ¿cómo conservarías los registros rechazados para revisión en vez de descartarlos?
 
+## Videos tutoriales en español
+
+Ruta de estudio sugerida; los videos son material de apoyo, no sustituyen el paso a paso. Las duraciones son aproximadas y no están incluidas en la duración del reto. Enlaces y disponibilidad revisados el **25 de noviembre de 2026**; YouTube requiere conexión a Internet.
+
+| Orden y video | Canal / duración | Qué estudiar y cómo aplicarlo |
+|---|---|---|
+| 1. [Arquitectura Medallion en Databricks: Pipeline ETL completo, Bronze, Silver y Gold con Delta Lake](https://www.youtube.com/watch?v=cyDLRr24mBs) | EDUCATRONICOS ISC · 27 min · español | Responsabilidad de cada capa, schemas, volumes, transformación y agregaciones. Aplica la separación de capas al flujo Bronze → Silver → Gold del reto; la implementación del video es ETL con notebooks, no la solución SDP. |
+| 2. [Lakeflow: Declarative Pipelines & Connect — Workshop Práctico](https://www.youtube.com/watch?v=6ISOHWFoK8w) | Databricks America Latina · 104 min · español | Refuerza el enfoque declarativo y las dependencias del pipeline. Si ya lo viste en el reto 1, úsalo solo como repaso; Connect y CDC no son requisitos de este reto. |
+
+En el video de Medallion puedes ir directamente a [qué es la arquitectura (00:00)](https://www.youtube.com/watch?v=cyDLRr24mBs), [publicación en Silver (18:54)](https://www.youtube.com/watch?v=cyDLRr24mBs&t=1134s) y [creación de Gold (21:42)](https://www.youtube.com/watch?v=cyDLRr24mBs&t=1302s). Los puntos corresponden a los capítulos publicados por el canal.
+
+Para repasar la orquestación periódica, consulta [Lakeflow Jobs Parte 2: Triggers y Scheduled](https://www.youtube.com/watch?v=mXLtzno4tqo), de **EDUCATRONICOS ISC** (14 min, español).
+
+**Compatibilidad y seguridad:** algunos videos usan **Delta Live Tables (DLT)** o separan Bronze, Silver y Gold en tareas Notebook. Aquí las tres capas son datasets de **un pipeline SDP** y el Job solo encadena generación → actualización del pipeline. Usa `from pyspark import pipelines as dp`, `@dp.expect_or_drop` y el código de `solucion/pipeline.py` como referencia de la regla de calidad; para su semántica consulta la documentación oficial de abajo. No copies credenciales ni datasets externos: conserva el generador dummy, tu sufijo y el límite de 500 registros por ejecución.
+
+**Comprobación de estudio:** justifica por qué Bronze conserva los negativos, Silver los descarta y Gold agrega solo los válidos. Comprueba 4/3 en el lote fijo y 500/450 por lote continuo de 500.
+
 ## Referencias
 
 - [Conceptos de pipelines](https://docs.databricks.com/aws/en/ldp/concepts)
