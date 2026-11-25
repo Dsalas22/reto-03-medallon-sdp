@@ -1,10 +1,12 @@
 # Databricks notebook source
 import json
+import random
 import re
 from uuid import uuid4
 
 dbutils.widgets.text("sufijo", "")
 dbutils.widgets.text("lote", "")
+dbutils.widgets.text("registros", "500")
 
 sufijo = dbutils.widgets.get("sufijo").strip().lower()
 lote = dbutils.widgets.get("lote").strip().lower()
@@ -21,15 +23,25 @@ eventos = [
 ]
 archivo = "lote_01.json"
 if lote == "continuo":
+    valor = dbutils.widgets.get("registros").strip()
+    if not re.fullmatch(r"[0-9]{1,3}", valor) or not 1 <= int(valor) <= 500:
+        raise ValueError("El parametro registros debe ser un entero entre 1 y 500.")
+    cantidad = int(valor)
     token = uuid4().hex
-    eventos = [{
-        "evento_id": f"dummy_{token}",
-        "aeronave_id": "A",
-        "pais_origen": "CR",
-        "velocidad_kmh": 250,
-        "persona_id": f"DUMMY-ID-{token}",
-        "persona_alias": "DUMMY_UCRANIA",
-    }]
+    rng = random.Random()
+    eventos = []
+    for indice in range(cantidad):
+        velocidad = float(rng.randint(150, 850))
+        if (indice + 1) % 10 == 0:
+            velocidad = -float(rng.randint(1, 60))
+        eventos.append({
+            "evento_id": f"dummy_{token}_{indice:03d}",
+            "aeronave_id": rng.choice(["A", "B", "C", "D", "E"]),
+            "pais_origen": rng.choice(["CR", "PA", "GT"]),
+            "velocidad_kmh": velocidad,
+            "persona_id": f"DUMMY-ID-{token}-{indice:03d}",
+            "persona_alias": rng.choice(["DUMMY_UCRANIA", "DUMMY_GRECIA", "DUMMY_FILIPINAS"]),
+        })
     archivo = f"lote_continuo_{token}.json"
 
 ruta = f"/Volumes/retos_sdp_{sufijo}/reto03_{sufijo}/volumen_sdp_{sufijo}/reto03_{sufijo}/entrada_{sufijo}"
