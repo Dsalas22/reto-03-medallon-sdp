@@ -5,7 +5,7 @@
 
 ## Objetivo
 
-Construir un flujo declarativo medallón completo a partir de datos sintéticos, con capas fijas: **Bronce** (`raw_data.bronze`) conserva todos los eventos; un staging privado aplica una regla de calidad; **Plata** (`data_vault.plata`) modela los datos válidos como **Data Vault** con dos hubs, un link y un satélite; **Oro** (`ods.gold`) publica indicadores por país y por aeronave en vistas materializadas.
+Construir un flujo declarativo medallón completo a partir de datos sintéticos, con capas fijas: **Bronce** (`raw_data.bronze`) conserva todos los eventos; un staging privado aplica una regla de calidad; **Plata** (`data_vault.silver`) modela los datos válidos como **Data Vault** con dos hubs, un link y un satélite; **Oro** (`ods.gold`) publica indicadores por país y por aeronave en vistas materializadas.
 
 ## Resultado esperado
 
@@ -14,10 +14,10 @@ El archivo de entrada contiene cuatro eventos. Bronce conserva los 4; la expecta
 | Tabla | Filas |
 |---|---:|
 | `raw_data.bronze.r03_vuelos_raw_dsh` | 4 |
-| `data_vault.plata.r03_hub_vuelo_dsh` | 3 |
-| `data_vault.plata.r03_hub_aeronave_dsh` | 2 (A y B) |
-| `data_vault.plata.r03_link_vuelo_aeronave_dsh` | 3 |
-| `data_vault.plata.r03_sat_vuelo_dsh` | 3 |
+| `data_vault.silver.r03_hub_vuelo_dsh` | 3 |
+| `data_vault.silver.r03_hub_aeronave_dsh` | 2 (A y B) |
+| `data_vault.silver.r03_link_vuelo_aeronave_dsh` | 3 |
+| `data_vault.silver.r03_sat_vuelo_dsh` | 3 |
 
 Oro:
 
@@ -38,10 +38,10 @@ Oro:
 | Aterrizaje | `/Volumes/raw_data/bronze/landing_retos_sdp/dsh/reto03/entrada` | Carpeta en volumen compartido | Archivos JSON del generador |
 | Bronce | `raw_data.bronze.r03_vuelos_raw_dsh` | Streaming table (Auto Loader) | Todo lo que llega, incluso inválidos, + `archivo_origen`, `fecha_archivo`, `fecha_ingesta` |
 | Staging | `r03_stg_vuelos_dsh` | Vista temporal privada con expectativa | Descarta velocidad nula o negativa; calcula hash keys, hashdiff, `fecha_carga`, `fuente_registro` |
-| Plata | `data_vault.plata.r03_hub_vuelo_dsh` | Streaming table, AUTO CDC SCD1 | Una fila por `evento_id` (primera carga) |
-| Plata | `data_vault.plata.r03_hub_aeronave_dsh` | Streaming table, AUTO CDC SCD1 | Una fila por `aeronave_id` (primera carga) |
-| Plata | `data_vault.plata.r03_link_vuelo_aeronave_dsh` | Streaming table, AUTO CDC SCD1 | Relación vuelo–aeronave (primera carga) |
-| Plata | `data_vault.plata.r03_sat_vuelo_dsh` | Streaming table, AUTO CDC SCD2 | País, velocidad y persona del vuelo; nueva versión solo si cambia el hashdiff |
+| Plata | `data_vault.silver.r03_hub_vuelo_dsh` | Streaming table, AUTO CDC SCD1 | Una fila por `evento_id` (primera carga) |
+| Plata | `data_vault.silver.r03_hub_aeronave_dsh` | Streaming table, AUTO CDC SCD1 | Una fila por `aeronave_id` (primera carga) |
+| Plata | `data_vault.silver.r03_link_vuelo_aeronave_dsh` | Streaming table, AUTO CDC SCD1 | Relación vuelo–aeronave (primera carga) |
+| Plata | `data_vault.silver.r03_sat_vuelo_dsh` | Streaming table, AUTO CDC SCD2 | País, velocidad y persona del vuelo; nueva versión solo si cambia el hashdiff |
 | Oro | `ods.gold.r03_vuelos_por_pais_dsh` | Vista materializada | Eventos y velocidad promedio por país (satélite vigente) |
 | Oro | `ods.gold.r03_vuelos_por_aeronave_dsh` | Vista materializada | Link + hub de aeronave + satélite vigente |
 
@@ -63,7 +63,7 @@ Oro:
 
 ## Preparación del instructor (una vez)
 
-Los catálogos `raw_data`, `data_vault` y `ods` y los esquemas `raw_data.bronze`, `data_vault.plata` y `ods.gold` ya existen. El instructor crea el volumen compartido y otorga los permisos una sola vez; sirven para los tres retos. Sustituye `participantes` por el grupo de participantes (recomendado) o por un correo:
+Los catálogos `raw_data`, `data_vault` y `ods` y los esquemas `raw_data.bronze`, `data_vault.silver` y `ods.gold` ya existen. El instructor crea el volumen compartido y otorga los permisos una sola vez; sirven para los tres retos. Sustituye `participantes` por el grupo de participantes (recomendado) o por un correo:
 
 ```sql
 CREATE VOLUME IF NOT EXISTS raw_data.bronze.landing_retos_sdp;
@@ -73,7 +73,7 @@ GRANT USE CATALOG ON CATALOG data_vault TO `participantes`;
 GRANT USE CATALOG ON CATALOG ods        TO `participantes`;
 
 GRANT USE SCHEMA, CREATE TABLE, SELECT ON SCHEMA raw_data.bronze  TO `participantes`;
-GRANT USE SCHEMA, CREATE TABLE, SELECT ON SCHEMA data_vault.plata TO `participantes`;
+GRANT USE SCHEMA, CREATE TABLE, SELECT ON SCHEMA data_vault.silver TO `participantes`;
 GRANT USE SCHEMA, CREATE MATERIALIZED VIEW, SELECT ON SCHEMA ods.gold TO `participantes`;
 
 GRANT READ VOLUME, WRITE VOLUME ON VOLUME raw_data.bronze.landing_retos_sdp TO `participantes`;
@@ -106,7 +106,7 @@ Los archivos de `datos/` son muestras de referencia equivalentes; no los subas s
 
 2. **Diseña las capas.** Bronce: streaming table de entrada con columnas técnicas. Staging: vista temporal que lee Bronce incrementalmente, descarta velocidades nulas o negativas y calcula hash keys y hashdiff. Plata: dos hubs, un link y un satélite. Oro: dos vistas materializadas.
 
-3. **Crea el código y pipeline.** Intenta implementar el diseño y compara con `solucion/pipeline.py`. Crea el archivo Python en el workspace y agrégalo a un nuevo pipeline llamado `pipeline_reto03_dsh`. Destino por defecto: catálogo `raw_data`, esquema `bronze`; modo **triggered**. Plata y Oro se publican en `data_vault.plata` y `ods.gold` porque el código usa el nombre completo de cada tabla. En **Settings → Configuration** agrega solo `pipelines.suffix = dsh`; el código rechaza un sufijo ausente o que no tenga exactamente tres letras. Las claves opcionales `raw_catalog`, `raw_schema`, `silver_catalog`, `silver_schema`, `gold_catalog`, `gold_schema` y `landing_volume` ya tienen como valores por defecto `raw_data`, `bronze`, `data_vault`, `plata`, `ods`, `gold` y `landing_retos_sdp`.
+3. **Crea el código y pipeline.** Intenta implementar el diseño y compara con `solucion/pipeline.py`. Crea el archivo Python en el workspace y agrégalo a un nuevo pipeline llamado `pipeline_reto03_dsh`. Destino por defecto: catálogo `raw_data`, esquema `bronze`; modo **triggered**. Plata y Oro se publican en `data_vault.silver` y `ods.gold` porque el código usa el nombre completo de cada tabla. En **Settings → Configuration** agrega solo `pipelines.suffix = dsh`; el código rechaza un sufijo ausente o que no tenga exactamente tres letras. Las claves opcionales `raw_catalog`, `raw_schema`, `silver_catalog`, `silver_schema`, `gold_catalog`, `gold_schema` y `landing_volume` ya tienen como valores por defecto `raw_data`, `bronze`, `data_vault`, `silver`, `ods`, `gold` y `landing_retos_sdp`.
 
 4. **Ejecuta.** Inicia una actualización normal y espera el resultado. Revisa el grafo y las métricas de calidad: la expectativa `velocidad_valida` del staging `r03_stg_vuelos_dsh` debe registrar 3 aceptados y 1 descartado. Como el staging es una vista temporal, la métrica aparece en cada flujo que lo lee (hubs, link y satélite) dentro de los eventos `flow_progress` del event log; usa la consulta de la sección de validación.
 
@@ -120,23 +120,23 @@ Los archivos de `datos/` son muestras de referencia equivalentes; no los subas s
 -- Conteos por capa
 SELECT
   (SELECT COUNT(*) FROM raw_data.bronze.r03_vuelos_raw_dsh)              AS bronce,
-  (SELECT COUNT(*) FROM data_vault.plata.r03_hub_vuelo_dsh)              AS hub_vuelo,
-  (SELECT COUNT(*) FROM data_vault.plata.r03_hub_aeronave_dsh)           AS hub_aeronave,
-  (SELECT COUNT(*) FROM data_vault.plata.r03_link_vuelo_aeronave_dsh)    AS link,
-  (SELECT COUNT(*) FROM data_vault.plata.r03_sat_vuelo_dsh)              AS sat;
+  (SELECT COUNT(*) FROM data_vault.silver.r03_hub_vuelo_dsh)              AS hub_vuelo,
+  (SELECT COUNT(*) FROM data_vault.silver.r03_hub_aeronave_dsh)           AS hub_aeronave,
+  (SELECT COUNT(*) FROM data_vault.silver.r03_link_vuelo_aeronave_dsh)    AS link,
+  (SELECT COUNT(*) FROM data_vault.silver.r03_sat_vuelo_dsh)              AS sat;
 
 -- El evento inválido está en Bronce pero no en Plata
 SELECT b.evento_id, b.velocidad_kmh, h.evento_id IS NOT NULL AS en_plata
 FROM raw_data.bronze.r03_vuelos_raw_dsh b
-LEFT JOIN data_vault.plata.r03_hub_vuelo_dsh h USING (evento_id)
+LEFT JOIN data_vault.silver.r03_hub_vuelo_dsh h USING (evento_id)
 ORDER BY b.evento_id;
 
 -- Vista de negocio reconstruida: link + hubs + satélite vigente
 SELECT hv.evento_id, ha.aeronave_id, s.pais_origen, s.velocidad_kmh, s.persona_alias
-FROM data_vault.plata.r03_link_vuelo_aeronave_dsh l
-JOIN data_vault.plata.r03_hub_vuelo_dsh hv    USING (hk_vuelo)
-JOIN data_vault.plata.r03_hub_aeronave_dsh ha USING (hk_aeronave)
-JOIN data_vault.plata.r03_sat_vuelo_dsh s     USING (hk_vuelo)
+FROM data_vault.silver.r03_link_vuelo_aeronave_dsh l
+JOIN data_vault.silver.r03_hub_vuelo_dsh hv    USING (hk_vuelo)
+JOIN data_vault.silver.r03_hub_aeronave_dsh ha USING (hk_aeronave)
+JOIN data_vault.silver.r03_sat_vuelo_dsh s     USING (hk_vuelo)
 WHERE s.__END_AT IS NULL
 ORDER BY hv.evento_id;
 
@@ -146,7 +146,7 @@ SELECT * FROM ods.gold.r03_vuelos_por_aeronave_dsh ORDER BY aeronave_id;
 
 -- Cálculo independiente por país sobre el satélite vigente
 SELECT pais_origen, COUNT(*) AS eventos, AVG(velocidad_kmh) AS velocidad_promedio
-FROM data_vault.plata.r03_sat_vuelo_dsh
+FROM data_vault.silver.r03_sat_vuelo_dsh
 WHERE __END_AT IS NULL
 GROUP BY pais_origen ORDER BY pais_origen;
 

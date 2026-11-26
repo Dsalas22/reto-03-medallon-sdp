@@ -8,7 +8,7 @@ from pyspark.sql.types import DoubleType, StringType, StructField, StructType
 
 # ---------- Configuracion (Settings > Configuration) ----------
 # Obligatorio: pipelines.suffix (tres letras). Opcionales, con estos valores por defecto:
-# raw_catalog=raw_data, raw_schema=bronze, silver_catalog=data_vault, silver_schema=plata,
+# raw_catalog=raw_data, raw_schema=bronze, silver_catalog=data_vault, silver_schema=silver,
 # gold_catalog=ods, gold_schema=gold, landing_volume=landing_retos_sdp
 SUFFIX = spark.conf.get("pipelines.suffix", "").strip().lower()
 if not re.fullmatch(r"[a-z]{3}", SUFFIX):
@@ -24,7 +24,7 @@ def config(clave, defecto):
 
 RAW_CATALOG = config("raw_catalog", "raw_data")
 RAW_SCHEMA = config("raw_schema", "bronze")
-PLATA = f"{config('silver_catalog', 'data_vault')}.{config('silver_schema', 'plata')}"
+PLATA = f"{config('silver_catalog', 'data_vault')}.{config('silver_schema', 'silver')}"
 ORO = f"{config('gold_catalog', 'ods')}.{config('gold_schema', 'gold')}"
 VOLUMEN = config("landing_volume", "landing_retos_sdp")
 
