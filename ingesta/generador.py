@@ -1,5 +1,7 @@
 # Databricks notebook source
+# DBTITLE 1,Generador de eventos dummy
 import json
+import os
 import random
 import re
 from uuid import uuid4
@@ -7,6 +9,10 @@ from uuid import uuid4
 dbutils.widgets.text("sufijo", "")
 dbutils.widgets.text("lote", "")
 dbutils.widgets.text("registros", "500")
+# Opcionales: ubicacion del volumen compartido de aterrizaje (landing).
+dbutils.widgets.text("catalogo", "raw_data")
+dbutils.widgets.text("esquema", "bronze")
+dbutils.widgets.text("volumen", "landing_retos_sdp")
 
 sufijo = dbutils.widgets.get("sufijo").strip().lower()
 lote = dbutils.widgets.get("lote").strip().lower()
@@ -44,9 +50,21 @@ if lote == "continuo":
         })
     archivo = f"lote_continuo_{token}.json"
 
-ruta = f"/Volumes/retos_sdp_{sufijo}/reto03_{sufijo}/volumen_sdp_{sufijo}/reto03_{sufijo}/entrada_{sufijo}"
+partes = [dbutils.widgets.get(w).strip() for w in ("catalogo", "esquema", "volumen")]
+if not all(re.fullmatch(r"[A-Za-z0-9_]+", p) for p in partes):
+    raise ValueError("catalogo, esquema y volumen solo admiten letras, numeros y guion bajo.")
+volumen = "/Volumes/" + "/".join(partes)
+if not os.path.isdir(volumen):
+    raise FileNotFoundError(
+        f"No existe el volumen {volumen} o no tienes permiso para usarlo. "
+        "Pide al instructor que lo cree y te otorgue READ VOLUME y WRITE VOLUME."
+    )
+ruta = f"{volumen}/{sufijo}/reto03/entrada"
 dbutils.fs.mkdirs(ruta)
+destino = f"{ruta}/{archivo}"
+if os.path.exists(destino):
+    raise FileExistsError(f"El archivo {archivo} ya existe en {ruta}. Cada lote fijo se escribe una sola vez: no repitas este lote.")
 contenido = "\n".join(json.dumps(evento) for evento in eventos) + "\n"
-if not dbutils.fs.put(f"{ruta}/{archivo}", contenido, False):
+if not dbutils.fs.put(destino, contenido, False):
     raise RuntimeError(f"No se pudo escribir el archivo {archivo}.")
 print(f"Lote {lote}: {len(eventos)} eventos escritos en {ruta}/{archivo}")
